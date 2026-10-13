@@ -39,3 +39,16 @@ def test_signatures_always_hold_even_with_confirmed_visa(profile):
         ).status
         == "HOLD"
     )
+
+
+def test_work_authorization_does_not_imply_citizenship(profile):
+    profile.work_authorization.dso_verified = True
+    profile.work_authorization.work_authorization_answer = "Yes"
+    profile.work_authorization.sponsorship_answer = "Yes"
+    profile.work_authorization.answers_verified = True
+    assert (
+        answer_question(
+            Question(label="Are you a U.S. citizen?", kind="work_authorization"), profile
+        ).status
+        == "HOLD"
+    )

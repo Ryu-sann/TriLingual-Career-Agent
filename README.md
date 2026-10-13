@@ -274,4 +274,4 @@ known USD salary conflicts remain blocked independently of manual review/score. 
 floors are compared only when currency and published month/year units are unambiguous;
 no salary answer or hourly/annual estimate is generated.
 
-Validation milestone: 112 local tests passed, including PostgreSQL and real browser fixtures.
+Validation milestone: 113 local tests passed, including PostgreSQL and real browser fixtures.

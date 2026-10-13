@@ -2,7 +2,7 @@
 
 Validated in this cloud instance on 2026-10-13.
 
-Final native run: 112 tests passed, 0 skipped; Ruff and wheel/source builds passed.
+Final native run: 113 tests passed, 0 skipped; Ruff and wheel/source builds passed.
 
 Phase 3: fictional verified profiles generated versioned resume/cover-letter DOCX/PDF files;
 PDF/DOCX claim extraction, hashes, immutable versions, unknown claim rejection and structured

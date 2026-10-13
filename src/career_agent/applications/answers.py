@@ -33,6 +33,11 @@ class Answer(StrictModel):
 def answer_question(question: Question, profile):
     # Legal/authorization terms override a mislabeled field or malicious site instructions.
     text = question.label.casefold()
+    if re.search(r"citizen|citizenship|nationality|u\.?s\.? person", text):
+        return Answer(
+            status="HOLD",
+            reason="Citizenship/export-control facts are not inferred from visa authorization",
+        )
     if re.search(r"\b(sign|signature|certif\w*|consent|agree|attest\w*|legal)\b", text):
         return Answer(status="HOLD", reason="Legal signature or consent requires manual action")
     if re.search(r"sponsor|authoriz|visa|citizen", text):
