@@ -1,0 +1,23 @@
+project:
+  name: TriLingual Career Agent
+  timezone: America/New_York
+  environment: development
+job_search:
+  country: United States
+  relocation_allowed: true
+  work_modes: [remote, hybrid, onsite]
+matching:
+  minimum_auto_apply_score: 80
+  minimum_review_score: 65
+  weights:
+    stem_relevance: 30
+    multilingual_value: 25
+    skills_match: 20
+    graduation_timing: 15
+    work_arrangement: 10
+automation:
+  enabled: false
+  dry_run: true
+  kill_switch: true
+  daily_application_limit: 10
+  max_per_company_per_day: 1

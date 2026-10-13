@@ -1,0 +1,38 @@
+schema_version: 1
+candidate_id: demo-candidate
+name: Sample Candidate
+education:
+  institution: Example University
+  degree: Bachelor of Arts
+  major: Physics
+  minor: Mathematics
+  graduation_month: '2027-12'
+  cip_code: null
+  cip_verification: UNKNOWN
+languages:
+  - language: Japanese
+    proficiency: native
+    verification: SELF_REPORTED
+  - language: English
+    proficiency: advanced
+    verification: SELF_REPORTED
+  - language: Mandarin Chinese
+    proficiency: near_native
+    verification: SELF_REPORTED
+claims: []
+preferences:
+  country: United States
+  relocation_allowed: true
+  preferred_work_modes: [remote, hybrid]
+  minimum_monthly_usd_remote: 4000
+  minimum_monthly_usd_onsite: 6000
+  available_start_date: null
+work_authorization:
+  current_status: null
+  post_completion_opt: UNKNOWN
+  stem_opt_extension: UNKNOWN
+  dso_verified: false
+  sponsorship_answer: null
+  work_authorization_answer: null
+  answers_verified: false
+identity_verified: false

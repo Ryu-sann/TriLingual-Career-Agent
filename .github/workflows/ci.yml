@@ -1,0 +1,32 @@
+name: Phase 1 validation
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_USER: career
+          POSTGRES_DB: career
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U career -d career"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      CAREER_TEST_DATABASE_URL: postgresql+psycopg://career@127.0.0.1:5432/career
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run pytest
+      - run: uv run career-agent dry-run

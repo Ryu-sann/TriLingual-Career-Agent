@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17.6
+    environment:
+      POSTGRES_USER: career
+      POSTGRES_DB: career
+      # Local development only, reachable on loopback. Use password/TLS for deployment.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - career_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U career -d career"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  career_postgres:
