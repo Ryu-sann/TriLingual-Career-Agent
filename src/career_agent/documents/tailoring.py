@@ -2,7 +2,6 @@ import json
 import os
 import re
 
-from openai import OpenAI
 from pydantic import Field
 
 from career_agent.core.config import StrictModel
@@ -45,7 +44,12 @@ def select_claims(profile, job, *, use_ai=False, client=None):
         if not key or not model:
             raise DocumentError("ai_configuration_missing")
         owned = client is None
-        client = client or OpenAI(api_key=key, max_retries=2, timeout=45)
+        if owned:
+            try:
+                from openai import OpenAI
+            except ImportError as exc:
+                raise DocumentError("ai_extra_not_installed") from exc
+            client = OpenAI(api_key=key, max_retries=2, timeout=45)
         try:
             response = client.responses.parse(
                 model=model,

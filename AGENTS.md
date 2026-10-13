@@ -19,3 +19,7 @@ For later phases, enforce policy in Python: authorization, caps, kill switch, de
 verified answers, and no retries after ambiguous submission. Never bypass CAPTCHA/MFA.
 Use uv sync --locked, uv run ruff check ., uv run pytest, and documented smoke checks.
 Use Alembic migrations; avoid create_all for runtime initialization.
+
+Normal workflows must use deterministic Python without AI dependencies or calls.
+Keep OpenAI in the optional ai extra and import it only after explicit opt-in.
+AI may only select verified claim IDs; never delegate policy or factual writing to AI.

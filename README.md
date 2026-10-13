@@ -150,11 +150,19 @@ and date. No imported claim is automatically verified. Exact verified claim text
 unknown language levels, GPA, achievements and dates are not added. Both PDF extraction and
 DOCX text are checked for the selected claims. Unsupported font glyphs stop generation.
 
-Optional `--use-ai` uses OpenAI Structured Outputs to select/reorder approved claim IDs only.
-Set `CAREER_OPENAI_API_KEY` and a currently available `CAREER_OPENAI_MODEL`; no model name or
-credential is guessed. Unknown/generated claim IDs fail validation. LangGraph orchestrates
-selection/render/validation; external tracing is disabled. OpenAI live calls have not been
-validated without credentials. Offline deterministic generation requires no AI key.
+The default installation and every normal workflow run without AI. Plain Python coordinates
+selection, rendering, validation and storage. Keyword matching orders verified claims;
+fixed templates produce the documents. Discovery, company-site search, scoring, answers,
+application controls, tracking, email classification and scheduling use program rules.
+Search APIs and Google integrations are ordinary HTTP services, not generative AI.
+
+An optional extension, installed only with `uv sync --locked --extra ai`, supports
+`--use-ai`: OpenAI Structured Outputs may select/reorder approved claim IDs only.
+It cannot write facts, answers or document prose, score jobs, authorize applications or
+submit them. Set `CAREER_OPENAI_API_KEY` and `CAREER_OPENAI_MODEL` explicitly to use it.
+Unknown/generated claim IDs fail validation. No AI framework or tracing service is used.
+`config/operations.yaml` keeps `use_ai: false`; no AI key or SDK is needed normally.
+Live OpenAI calls have not been validated without credentials.
 
 Applicant answers come from verified fields and DSO-confirmed authorization answers.
 Technical prose remains a draft until question-specific review. Unknown legal, consent,

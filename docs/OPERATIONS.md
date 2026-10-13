@@ -47,3 +47,11 @@ Retained files: repo, .venv, ignored data/profile/, career.db, document/evidence
 scheduler.db. Processes must restart after snapshot restoration. GitHub does not restore
 private inputs; keep a secure backup. Review/save/publish in environment settings activates
 saved snapshots; a draft save and a Git push do not themselves publish the cloud environment.
+
+## Program-only default
+
+Use `uv sync --locked` for the standard installation. It does not install OpenAI,
+LangGraph or LangSmith. All operational steps work without AI keys. Keep
+`use_ai: false` in `config/operations.yaml`. Optional claim ordering requires
+`uv sync --locked --extra ai`, explicit model/key configuration and opt-in.
+Unknown facts still require human verification; AI cannot fill them in.

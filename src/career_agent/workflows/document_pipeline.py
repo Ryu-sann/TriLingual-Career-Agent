@@ -1,11 +1,8 @@
 import json
 import shutil
 from pathlib import Path
-from typing import TypedDict
 from uuid import uuid4
 
-from langgraph.graph import END, START, StateGraph
-from langsmith import tracing_context
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -14,32 +11,6 @@ from career_agent.database.repository import save_profile
 from career_agent.documents.export import export_documents
 from career_agent.documents.tailoring import DocumentError, select_claims
 from career_agent.models.job import JobPosting
-
-
-class DocumentState(TypedDict, total=False):
-    profile: object
-    job: object
-    selection: object
-    output: Path
-    manifest: dict
-    use_ai: bool
-
-
-def document_graph():
-    graph = StateGraph(DocumentState)
-    graph.add_node(
-        "select", lambda s: {"selection": select_claims(s["profile"], s["job"], use_ai=s["use_ai"])}
-    )
-    graph.add_node(
-        "render_validate",
-        lambda s: {
-            "manifest": export_documents(s["profile"], s["job"], s["selection"], s["output"])
-        },
-    )
-    graph.add_edge(START, "select")
-    graph.add_edge("select", "render_validate")
-    graph.add_edge("render_validate", END)
-    return graph.compile()
 
 
 def prepare_documents(engine, profile, job_id, root: Path, *, use_ai=False):
@@ -65,11 +36,8 @@ def prepare_documents(engine, profile, job_id, root: Path, *, use_ai=False):
         ) + 1
     output = root / "data/resumes" / profile.candidate_id / job_id / f"{version}-{uuid4().hex}"
     try:
-        with tracing_context(enabled=False):
-            result = document_graph().invoke(
-                {"profile": profile, "job": posting, "output": output, "use_ai": use_ai}
-            )
-        manifest = result["manifest"]
+        selection = select_claims(profile, posting, use_ai=use_ai)
+        manifest = export_documents(profile, posting, selection, output)
         digest = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
         with Session(engine) as session, session.begin():
             save_profile(session, profile)
