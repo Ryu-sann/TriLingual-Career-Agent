@@ -72,13 +72,21 @@ class AutomationSettings(StrictModel):
     max_per_company_per_day: int = Field(default=1, ge=1, le=1)
 
     @model_validator(mode="after")
-    def phase_one_only(self):
+    def discovery_only(self):
         if self.enabled or not self.dry_run:
-            raise ValueError("Phase 1 supports disabled automation and dry-run only")
+            raise ValueError("Phases 1–2 support disabled automation and dry-run only")
         return self
 
 
+class DiscoverySettings(StrictModel):
+    freshness_hours: int = Field(default=24, ge=1, le=168)
+    request_interval_seconds: float = Field(default=0.5, ge=0.1, le=30)
+    page_size: int = Field(default=100, ge=1, le=100)
+    max_pages: int = Field(default=100, ge=1, le=100)
+
+
 class Settings(StrictModel):
+    discovery: DiscoverySettings = Field(default_factory=DiscoverySettings)
     project: ProjectSettings = Field(default_factory=ProjectSettings)
     job_search: SearchSettings = Field(default_factory=SearchSettings)
     matching: MatchingSettings = Field(default_factory=MatchingSettings)

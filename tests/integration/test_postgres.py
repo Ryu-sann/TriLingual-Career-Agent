@@ -51,3 +51,41 @@ def test_postgres_migration_and_roundtrip(profile):
             conn.execute(text("SET search_path TO public"))
             conn.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
         engine.dispose()
+
+
+@pytest.mark.skipif(
+    not os.environ.get("CAREER_TEST_DATABASE_URL"),
+    reason="Set CAREER_TEST_DATABASE_URL for dedicated PostgreSQL test DB",
+)
+def test_postgres_discovery_and_duplicate_protection(profile):
+    from sqlalchemy import func, select
+
+    from career_agent.core.config import Settings
+    from career_agent.database.connection import migrate
+    from career_agent.database.models import Application, Job
+    from career_agent.workflows.job_pipeline import discover, ranked_jobs
+    from tests.integration.test_discovery_pipeline import WATCHLIST, mock_client
+
+    url = os.environ["CAREER_TEST_DATABASE_URL"]
+    admin = engine_for(url)
+    schema = "test_" + uuid4().hex
+    test_engine = None
+    try:
+        with admin.begin() as conn:
+            conn.execute(text(f'CREATE SCHEMA "{schema}"'))
+        test_engine = engine_for(url, connect_args={"options": f"-csearch_path={schema}"})
+        migrate(test_engine, ROOT)
+        for _ in range(2):
+            with mock_client() as client:
+                summary = discover(test_engine, profile, Settings(), WATCHLIST, client=client)
+            assert summary["status"] == "SUCCEEDED"
+        with Session(test_engine) as session:
+            assert session.scalar(select(func.count()).select_from(Job)) == 3
+            assert session.scalar(select(func.count()).select_from(Application)) == 0
+        assert len(ranked_jobs(test_engine, profile, Settings())) == 3
+    finally:
+        if test_engine is not None:
+            test_engine.dispose()
+        with admin.begin() as conn:
+            conn.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
+        admin.dispose()

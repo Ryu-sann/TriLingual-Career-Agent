@@ -1,4 +1,4 @@
-name: Phase 1 validation
+name: Phase 1 and 2 validation
 on: [push, pull_request]
 permissions:
   contents: read

@@ -1,8 +1,8 @@
 # TriLingual Career Agent
 
-Phase 1: Python 3.12+ foundation for an evidence-based US technical job-search agent.
+Phases 1–2: Python 3.12+ foundation, public job discovery, scoring and a local dashboard.
 Japanese, English and Mandarin capability and physics-degree relevance drive future matching.
-**Live applications are disabled.** This phase runs offline and submits nothing.
+**Live applications are disabled.** The foundation dry-run is offline; discovery only reads public jobs. No submissions occur.
 
 ## Quick start
 
@@ -67,8 +67,76 @@ the shell. Do not put database credentials in command-line arguments or committe
 
 See [the implementation plan](docs/IMPLEMENTATION_PLAN.md). Phase 1 includes 12 foundational
 SQLAlchemy tables, foreign keys, unique constraints, profile import/upsert, Alembic migration,
-strict validated configuration, redacted diagnostics, CI and tests. Later phases implement
-state transitions, scoring, document generation, submission policy and API integrations.
+strict validated configuration, redacted diagnostics, CI and tests. Phase 2 adds discovery and scoring. Later phases implement
+state transitions, document generation, submission policy and email/calendar integrations.
 
 Use one reviewed commit/PR per phase. Run tests before committing. CI runs on GitHub pushes
 and pull requests; local test success alone does not establish a GitHub CI result.
+
+## Phase 2 — Public job discovery and scoring
+
+Greenhouse, Lever and Ashby public **GET** feeds are supported. The default employer watchlist
+contains Astranis, Zoox and OpenAI. This is a configurable starting set, not a search of every
+US employer or a confirmation of E-Verify membership. Edit `config/company_watchlist.yaml`
+to add known board IDs and employer domains. Candidate data is never sent to job-board APIs.
+
+```sh
+export UV_CACHE_DIR=/workspace/.cache/uv # Needed in this cloud environment
+uv sync --locked
+uv run career-agent discover --profile data/profile/candidate_profile.yaml
+uv run career-agent list-jobs --profile data/profile/candidate_profile.yaml --query physics --limit 10
+uv run streamlit run src/career_agent/dashboard/app.py \
+  --server.address 127.0.0.1 --server.port 8501 --server.headless true \
+  --browser.gatherUsageStats false
+```
+
+Omit `--profile` to use the fictional sample if private inputs are absent. PostgreSQL uses
+the same commands with `CAREER_DATABASE_URL` exported as above. Run from this checkout.
+The dashboard can switch between sample/local private profiles and displays source links,
+score components, quoted evidence, language roles, unresolved eligibility, provider-supplied
+salary metadata, freshness and run errors. Search accepts multiple terms (all must match)
+and quoted phrases. Saved searches come from `config/job_keywords.yaml`.
+
+Required outbound HTTPS hosts: `boards-api.greenhouse.io`, `api.lever.co`,
+`api.ashbyhq.com`. Keep TLS verification enabled. No API keys or OpenAI/OAuth setup is needed.
+Network denial is a failed/partial run, never a successful zero-job discovery. Exit codes:
+0 complete, 3 partial (some boards failed), 2 failed. Safe error codes are in the run summary;
+response bodies, candidate details and database credentials are excluded from diagnostics.
+
+Lever uses documented `skip`/`limit` pagination; the other two providers return full feeds.
+Requests are rate-limited, transient 429/502/503/504 responses receive bounded backoff, and
+redirects are rejected. Partial pagination or malformed data never closes saved postings.
+A valid complete empty board does mark that board's missing postings delisted. Multiple
+observed source aliases are preserved; identical source URLs/identities deduplicate, while
+possible same-company/title/location duplicates across providers are held for review.
+Repeated discovery preserves jobs and appends evaluation/workflow history.
+
+The 100-point score uses configured weights: physics/STEM 30, language advantage 25,
+verified skills 20, graduation timing 15, work arrangement 10. Rules provide **preliminary
+signals**, not AI judgment or immigration advice. Only verified candidate claims contribute
+skill points; self-reported language levels remain identified as such. Titles alone never
+prove degree-related duties. Missing information lowers evidence/points rather than being
+invented. Salary fields retain the provider's original units; no automatic annual conversion
+or candidate salary answers are generated.
+
+Post-completion OPT and STEM OPT statuses remain separately UNKNOWN in this phase. Degree
+relationship, employer identity, E-Verify, I-983, supervision, exact start date and other
+hard checks require confirmation. A high score is still HOLD; old/non-US/delisted postings
+are blocked regardless of score. Readiness is recomputed using observation timestamps
+(default 24-hour freshness), not an indefinitely cached score. No resumes, emails, browser
+submissions or live application controls are implemented in Phase 2.
+
+Validation: `uv run ruff check .`, `uv run pytest` and `uv build`. Set
+`CAREER_TEST_DATABASE_URL` to run both PostgreSQL checks. Tests use fictional offline feeds
+and Streamlit AppTest; live API results are checked separately and stored only under ignored
+`data/`. See [Phase 2 validation](docs/PHASE2_VALIDATION.md).
+
+### Company-site search
+
+`uv run career-agent site-search --job-title 'Photonics Engineer'` produces
+`site:company-careers-site ("Photonics Engineer" AND "Remote")` queries and search links.
+The dashboard provides these alongside official careers pages. LinkedIn and aggregators
+are not application routes. Optional `--automated-search` uses Brave Web Search with
+`CAREER_BRAVE_API_KEY`; only employer-domain results survive filtering, and all remain
+unverified leads until an actual employer posting is checked. No search-engine scraping
+or access-control bypass is used.

@@ -13,13 +13,13 @@ def database_url(explicit: str | None = None) -> str:
     return explicit or os.environ.get("CAREER_DATABASE_URL") or DEFAULT_URL
 
 
-def engine_for(url: str):
+def engine_for(url: str, **kwargs):
     parsed = make_url(url)
     if parsed.get_backend_name() not in {"sqlite", "postgresql"}:
         raise ValueError("Only SQLite and PostgreSQL are supported")
     if parsed.get_backend_name() == "sqlite" and parsed.database not in {None, ":memory:"}:
         Path(parsed.database).parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(url, echo=False)
+    engine = create_engine(url, echo=False, **kwargs)
     if engine.dialect.name == "sqlite":
 
         @event.listens_for(engine, "connect")

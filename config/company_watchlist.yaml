@@ -1,2 +1,17 @@
-# Phase 2: configure real ATS board IDs after verifying employers.
-companies: []
+# Public ATS board identifiers; these are discovery sources, not eligibility endorsements.
+companies:
+  - name: Astranis
+    domain: astranis.com
+    provider: greenhouse
+    board: astranis
+    careers_url: https://www.astranis.com/careers
+  - name: Zoox
+    domain: zoox.com
+    provider: lever
+    board: zoox
+    careers_url: https://zoox.com/careers
+  - name: OpenAI
+    domain: openai.com
+    provider: ashby
+    board: openai
+    careers_url: https://openai.com/careers

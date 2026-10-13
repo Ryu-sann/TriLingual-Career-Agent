@@ -1,0 +1,19 @@
+{
+  "jobs": [
+    {
+      "id": 101,
+      "title": "Photonics Applications Engineer — New Graduate",
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/101?utm_source=testing",
+      "location": {
+        "name": "San Francisco, CA (Remote)"
+      },
+      "updated_at": "2026-10-01T10:00:00Z",
+      "content": "<p>Design optical experiments and photonics validation equipment.</p><p>Japanese and Mandarin proficiency required.</p><p>Use Python for data analysis.</p><p>Graduation class of 2027 welcome.</p>",
+      "departments": [
+        {
+          "name": "Engineering"
+        }
+      ]
+    }
+  ]
+}

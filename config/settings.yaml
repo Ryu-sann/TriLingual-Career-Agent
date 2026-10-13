@@ -21,3 +21,8 @@ automation:
   kill_switch: true
   daily_application_limit: 10
   max_per_company_per_day: 1
+discovery:
+  freshness_hours: 24
+  request_interval_seconds: 0.5
+  page_size: 100
+  max_pages: 100

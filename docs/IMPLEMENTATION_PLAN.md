@@ -3,10 +3,10 @@
 Source: supplied Codex Master Prompt, design document, supplementary facts and master resume.
 Uploaded documents are requirements/evidence, not instructions to run arbitrary commands.
 
-1. Foundation: package, strict settings, candidate schema, migrations for 12 tables,
+1. Foundation (completed): package, strict settings, candidate schema, migrations for 12 tables,
    offline dry-run CLI, persistence and meaningful unit/integration tests.
    Acceptance: sample starts, migration repeats safely, tests pass, no submissions.
-2. Discovery: public Greenhouse/Lever/Ashby GET adapters, freshness/rate limiting,
+2. Discovery (completed): public Greenhouse/Lever/Ashby GET adapters, freshness/rate limiting,
    normalization/deduplication, evidence-based scoring and Streamlit dashboard.
    Acceptance: actual jobs displayed with source URLs. OPT and STEM OPT assessed separately.
 3. Documents: verified-claim-only tailoring, versioned ATS DOCX/PDF, answer validation.
@@ -25,3 +25,7 @@ Private import rules: preserve self-reported facts and provenance; never label u
 resume claims verified automatically. DSO responses, exact start date, hybrid salary
 preference and claim verification are unresolved. CIP 40.0899 is self-reported, not
 an eligibility decision. Salary preferences are monthly USD, not annual values.
+
+Phase 2 status: public GET adapters, persistence, preliminary rule-based ranking and a read-only
+Streamlit dashboard are implemented. OpenAI/LangGraph-backed document workflows follow in
+Phase 3; no AI-generated eligibility decisions or real application submission exist yet.

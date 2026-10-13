@@ -1,0 +1,26 @@
+[
+  {
+    "id": "abc",
+    "text": "Test Engineer",
+    "hostedUrl": "https://jobs.lever.co/example/abc",
+    "categories": {
+      "location": "Foster City, CA",
+      "allLocations": [
+        "Foster City, CA",
+        "Seattle, WA"
+      ],
+      "commitment": "Full-time",
+      "team": "Sensors"
+    },
+    "descriptionPlain": "Design semiconductor test equipment.",
+    "lists": [
+      {
+        "text": "Requirements",
+        "content": "<ul><li>Python data analysis required.</li></ul>"
+      }
+    ],
+    "additionalPlain": "Japanese preferred.",
+    "workplaceType": "hybrid",
+    "createdAt": 1760000000000
+  }
+]

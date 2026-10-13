@@ -1,0 +1,29 @@
+{
+  "jobs": [
+    {
+      "id": "xyz",
+      "title": "Research Engineer",
+      "jobUrl": "https://jobs.ashbyhq.com/example/xyz",
+      "location": "New York",
+      "descriptionPlain": "Develop physics simulation tools. Mandarin is a plus.",
+      "publishedAt": "2026-10-01T10:00:00Z",
+      "isListed": true,
+      "isRemote": false,
+      "workplaceType": "OnSite",
+      "address": {
+        "postalAddress": {
+          "addressCountry": "US"
+        }
+      },
+      "employmentType": "FullTime"
+    },
+    {
+      "id": "hidden",
+      "title": "Unlisted",
+      "jobUrl": "https://jobs.ashbyhq.com/example/hidden",
+      "location": "Remote",
+      "descriptionPlain": "Hidden posting",
+      "isListed": false
+    }
+  ]
+}
