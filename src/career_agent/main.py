@@ -17,6 +17,7 @@ from career_agent.database.models import AuditLog, WorkflowRun, now
 from career_agent.database.repository import save_profile
 from career_agent.discovery.http import DiscoveryError
 from career_agent.discovery.site_search import brave_search, search_links
+from career_agent.documents.tailoring import DocumentError
 from career_agent.models.candidate import CandidateProfile, Verification
 from career_agent.models.job import Watchlist
 from career_agent.workflows.job_pipeline import discover, ranked_jobs
@@ -55,13 +56,23 @@ def main(argv=None) -> int:
     )
     parser.add_argument(
         "command",
-        choices=["init-db", "validate-profile", "dry-run", "discover", "list-jobs", "site-search"],
+        choices=[
+            "init-db",
+            "validate-profile",
+            "dry-run",
+            "discover",
+            "list-jobs",
+            "site-search",
+            "documents",
+        ],
     )
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--settings", type=Path, default=Path("config/settings.yaml"))
     parser.add_argument("--profile", type=Path, default=Path("examples/candidate_profile.yaml"))
     parser.add_argument("--watchlist", type=Path, default=Path("config/company_watchlist.yaml"))
     parser.add_argument("--query", default="")
+    parser.add_argument("--job-id")
+    parser.add_argument("--use-ai", action="store_true")
     parser.add_argument("--job-title", default="Applications Engineer")
     parser.add_argument("--automated-search", action="store_true")
     parser.add_argument("--limit", type=int, default=25)
@@ -91,6 +102,15 @@ def main(argv=None) -> int:
             print(json.dumps({"schema": "0001", "status": "initialized"}))
             return 0
         profile = CandidateProfile.load(root / args.profile)
+        if args.command == "documents":
+            from career_agent.workflows.document_pipeline import prepare_documents
+
+            print(
+                json.dumps(
+                    prepare_documents(engine, profile, args.job_id, root, use_ai=args.use_ai)
+                )
+            )
+            return 0
         if args.command == "discover":
             summary = discover(engine, profile, settings, Watchlist.load(root / args.watchlist))
             print(json.dumps(summary, sort_keys=True))
@@ -122,6 +142,9 @@ def main(argv=None) -> int:
             session.add(AuditLog(run_id=run.id, action="DRY_RUN_COMPLETED", details=summary))
         print(json.dumps(summary, sort_keys=True))
         return 0
+    except DocumentError as exc:
+        print(json.dumps({"error": str(exc)}))
+        return 2
     except DiscoveryError as exc:
         print(json.dumps({"error": exc.code}))
         return 2

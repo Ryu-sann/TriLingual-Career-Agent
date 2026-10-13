@@ -140,3 +140,25 @@ are not application routes. Optional `--automated-search` uses Brave Web Search 
 `CAREER_BRAVE_API_KEY`; only employer-domain results survive filtering, and all remain
 unverified leads until an actual employer posting is checked. No search-engine scraping
 or access-control bypass is used.
+
+## Phase 3 — Verified documents and answers
+
+`uv run career-agent documents --job-id <id-from-list-jobs> --profile <private-profile.yaml>`
+creates versioned resume and cover-letter DOCX/PDF files plus SHA-256 manifests under ignored
+`data/resumes/`. Identity must be confirmed and claims marked VERIFIED with source, reviewer
+and date. No imported claim is automatically verified. Exact verified claim text is used;
+unknown language levels, GPA, achievements and dates are not added. Both PDF extraction and
+DOCX text are checked for the selected claims. Unsupported font glyphs stop generation.
+
+Optional `--use-ai` uses OpenAI Structured Outputs to select/reorder approved claim IDs only.
+Set `CAREER_OPENAI_API_KEY` and a currently available `CAREER_OPENAI_MODEL`; no model name or
+credential is guessed. Unknown/generated claim IDs fail validation. LangGraph orchestrates
+selection/render/validation; external tracing is disabled. OpenAI live calls have not been
+validated without credentials. Offline deterministic generation requires no AI key.
+
+Applicant answers come from verified fields and DSO-confirmed authorization answers.
+Technical prose remains a draft until question-specific review. Unknown legal, consent,
+immigration, salary and required demographic questions stop progression; optional
+demographics are omitted. Private supplied claims currently remain SELF_REPORTED, so
+personal production documents are blocked until review; fixture documents were generated
+and validated successfully.
