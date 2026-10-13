@@ -73,8 +73,10 @@ class AutomationSettings(StrictModel):
 
     @model_validator(mode="after")
     def discovery_only(self):
-        if self.enabled or not self.dry_run:
-            raise ValueError("Phases 1–2 support disabled automation and dry-run only")
+        if self.enabled == self.dry_run:
+            raise ValueError(
+                "Enabled live mode requires dry_run=false; disabled mode requires dry_run=true"
+            )
         return self
 
 

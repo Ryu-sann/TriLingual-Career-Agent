@@ -64,6 +64,7 @@ def main(argv=None) -> int:
             "list-jobs",
             "site-search",
             "documents",
+            "application",
         ],
     )
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -72,6 +73,10 @@ def main(argv=None) -> int:
     parser.add_argument("--watchlist", type=Path, default=Path("config/company_watchlist.yaml"))
     parser.add_argument("--query", default="")
     parser.add_argument("--job-id")
+    parser.add_argument("--resume-id")
+    parser.add_argument("--form-spec", type=Path)
+    parser.add_argument("--review", type=Path)
+    parser.add_argument("--live", action="store_true")
     parser.add_argument("--use-ai", action="store_true")
     parser.add_argument("--job-title", default="Applications Engineer")
     parser.add_argument("--automated-search", action="store_true")
@@ -102,6 +107,27 @@ def main(argv=None) -> int:
             print(json.dumps({"schema": "0001", "status": "initialized"}))
             return 0
         profile = CandidateProfile.load(root / args.profile)
+        if args.command == "application":
+            from career_agent.applications.policy import FormSpec, Review
+            from career_agent.workflows.application_pipeline import apply
+
+            if args.form_spec is None or args.review is None:
+                raise ValueError("Form specification and verified review are required")
+            spec = FormSpec.model_validate(json.loads(args.form_spec.read_text()))
+            review = Review.model_validate(json.loads(args.review.read_text()))
+            result = apply(
+                engine,
+                profile,
+                args.job_id,
+                args.resume_id,
+                root,
+                spec,
+                review,
+                settings,
+                mode="live" if args.live else "dry_run",
+            )
+            print(json.dumps(result))
+            return 0 if result["status"] in {"DRY_RUN", "SUBMITTED"} else 2
         if args.command == "documents":
             from career_agent.workflows.document_pipeline import prepare_documents
 

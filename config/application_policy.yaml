@@ -1,0 +1,5 @@
+# No real submission route is approved. Default settings remain disabled/dry-run/kill switch.
+# Configure a site-specific FormSpec only after confirming automation permission and selectors.
+# A trusted Review must bind profile/job/document/schema hashes and every required check.
+authorized_routes: []
+employer_rules: []

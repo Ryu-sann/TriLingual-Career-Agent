@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "trilingual-career-agent"
-version = "0.3.0"
+version = "0.4.0"
 description = "Evidence-based career agent — Phase 2 discovery and evaluation"
 requires-python = ">=3.12"
 dependencies = [
@@ -12,7 +12,7 @@ dependencies = [
   "psycopg[binary]>=3.3,<4", "PyYAML>=6.0.3,<7",
   "httpx>=0.28,<0.29", "streamlit>=1.50,<2",
   "python-docx>=1.2,<2", "reportlab>=4.4,<5", "pypdf>=6,<7",
-  "openai>=2,<3", "langgraph>=1,<2",
+  "openai>=2,<3", "langgraph>=1,<2", "playwright>=1.55,<2",
 ]
 
 [dependency-groups]

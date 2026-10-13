@@ -162,3 +162,29 @@ immigration, salary and required demographic questions stop progression; optiona
 demographics are omitted. Private supplied claims currently remain SELF_REPORTED, so
 personal production documents are blocked until review; fixture documents were generated
 and validated successfully.
+
+## Phase 4 — Permitted form execution
+
+Playwright operates only on an explicitly permitted employer/ATS route and a reviewed
+form contract. Field labels and required inputs are checked before any fill/upload.
+CAPTCHA, login/MFA, changed labels, unknown/legal questions and unverified answers pause
+execution. Dry-run freezes all networking before prefill and never enables POST.
+
+`career-agent application --job-id <id> --resume-id <id> --form-spec <private-json>
+--review <private-json> --profile <private-yaml>` defaults to dry-run. `--live` additionally
+requires enabled=true, dry_run=false, kill_switch=false and the exact official route
+in trusted application_policy.yaml. Defaults approve no real route. Review evidence binds
+profile/job/document/form hashes; changed artifacts or stale reviews are blocked.
+Reusable employer rules can construct evidence from previously verified company/role
+configuration, so fully known cases need no new case-by-case approval. Unknown checks stop.
+
+Submission reservations and caps are committed before clicking: candidate/job uniqueness,
+10/day and 1/company/day, counted in the configured timezone. SQLite uses BEGIN IMMEDIATE;
+PostgreSQL locks the candidate row. Answers, audit transitions and screenshots are retained
+privately. A missing/ambiguous confirmation becomes UNKNOWN_SUBMISSION and is never retried.
+Only owned loopback fixtures can use fixture mode; public sites cannot. Real Greenhouse,
+Lever and Ashby forms require a site-specific permitted contract; no blanket claim that
+every current ATS form is supported is made. LinkedIn/aggregator submission is forbidden.
+
+Browser tests use /usr/bin/chromium when available; set CAREER_CHROMIUM_PATH for a compatible
+binary or install the pinned Playwright Chromium. No production submission was performed.
