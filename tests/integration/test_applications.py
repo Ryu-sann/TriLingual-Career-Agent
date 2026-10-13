@@ -202,3 +202,30 @@ def test_changed_review_and_live_kill_switch_hold(engine, profile, tmp_path, for
         posting = JobPosting.model_validate(s.get(Job, job).payload["posting"])
     reasons = policy_reasons(p, posting, {}, spec, review, Settings(), 99, "live")
     assert "live_submission_disabled" in reasons
+
+
+def test_emergency_flag_stops_before_any_browser_or_document_work(engine, profile, tmp_path):
+    flag = tmp_path / "data/emergency_stop.flag"
+    flag.parent.mkdir()
+    flag.write_text("paused")
+    assert apply(
+        engine, profile, "missing", "missing", tmp_path, None, None, Settings(), mode="live"
+    )["reasons"] == ["emergency_stop"]
+
+
+def test_new_required_demographic_question_is_not_omitted(engine, profile, tmp_path, form_server):
+    from career_agent.applications.policy import FormField
+
+    url, state = form_server
+    state["extra"] = '<label for="gender">Gender</label><input id="gender" aria-required="true">'
+    p, job, resume, spec, review = prepared(engine, profile, tmp_path, url)
+    spec.fields.append(
+        FormField(
+            selector="#gender",
+            question={"label": "Gender", "kind": "demographic", "required": False},
+        )
+    )
+    review.schema_hash = digest(spec.model_dump(mode="json"))
+    result = apply(engine, p, job, resume, tmp_path, spec, review, Settings(), mode="fixture")
+    assert result["status"] == "HOLD" and "required_question_changed" in result["reasons"]
+    assert state["posts"] == 0

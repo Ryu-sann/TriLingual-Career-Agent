@@ -29,7 +29,7 @@ def verified_profile(profile):
         ),
         Claim(
             claim_id="degree",
-            text="Physics undergraduate, expected December 2027.",
+            text="Bachelor of Arts in Physics undergraduate, expected December 2027.",
             category="education",
             verification="VERIFIED",
             source="Fictional transcript",

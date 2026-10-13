@@ -1,6 +1,6 @@
 # TriLingual Career Agent
 
-Phases 1–2: Python 3.12+ foundation, public job discovery, scoring and a local dashboard.
+Phases 1–5: public discovery, company-site search, verified documents, guarded forms and scheduled operations.
 Japanese, English and Mandarin capability and physics-degree relevance drive future matching.
 **Live applications are disabled.** The foundation dry-run is offline; discovery only reads public jobs. No submissions occur.
 
@@ -188,3 +188,90 @@ every current ATS form is supported is made. LinkedIn/aggregator submission is f
 
 Browser tests use /usr/bin/chromium when available; set CAREER_CHROMIUM_PATH for a compatible
 binary or install the pinned Playwright Chromium. No production submission was performed.
+
+## Phase 5 — Tracking and scheduled operations
+
+The dashboard has Jobs, Documents, Applications, Email/Interviews, Analytics and Settings
+views. Select the local private profile before using the one-time identity/claim/language
+confirmation controls. Confirmed claims keep source, reviewer and date; unchecking a claim
+withdraws verification. That action never verifies CIP/DSO answers or immigration eligibility.
+
+```sh
+uv run career-agent worker --once       # Public refresh + eligible document/application pipeline
+uv run career-agent worker              # One worker, persisted scheduler
+uv run career-agent sync-email          # Read-only Gmail; requires configured OAuth
+uv run career-agent calendar --event data/confirmed_interview.json   # Preview only
+uv run career-agent calendar --event data/confirmed_interview.json --write-calendar
+```
+
+Schedules are America/New_York: discovery at 09:00/21:00, a private summary at 22:00.
+Email polling is disabled initially (15 minutes when enabled); alerts appear after a poll,
+not via a real-time push service. Calendar writes and AI are disabled initially. Operations
+settings are in config/operations.yaml. Optional site_search_enabled runs the requested
+site:/quoted-role/Remote searches with Brave, retaining only employer-domain results as
+unverified leads. Search snippets cannot authorize applications. Add employer boards to
+the watchlist to normalize actual postings. This does not search all US employers by default.
+
+Documents are cached by profile and stable job-content hashes, versioned when changed, and
+limited to 25 new versions/cycle. Previously attempted/ambiguous jobs never resubmit.
+A worker lock and APScheduler max_instances/coalescing prevent competing local workers.
+Scheduler data is private trusted state; do not import scheduler DB files from untrusted sources.
+
+OAuth requires CAREER_GOOGLE_CLIENT_ID, CAREER_GOOGLE_CLIENT_SECRET and
+CAREER_GOOGLE_REFRESH_TOKEN. Grant only gmail.readonly and calendar.events.owned.
+Configure your own desktop/web OAuth client and obtain a refresh token through Google's
+authorized consent flow; keys/tokens must be entered through environment settings, never
+chat or Git. Account email must match the candidate's application Gmail. Metadata/snippets
+are saved locally, classified as candidates and left for review. No Gmail send operation
+is implemented. Confirmed association can reconcile an ambiguous application via
+workflows/tracking.py without clicking Submit again.
+
+Calendar proposals require an observed email, explicit time/evidence and the same Google
+account. Stable event IDs prevent duplicates; mismatched existing events stop reconciliation.
+Use the Email/Interviews page to save confirmed time proposals; a calendar-enabled worker
+can process them. Unknown dates, calendar output and email/job association are never guessed.
+An optional TokenVault encrypts local tokens with Fernet; keep its 0600 key separately from
+Git and ciphertext. CAREER_GOOGLE_VAULT_PATH/CAREER_GOOGLE_KEY_PATH can replace an injected
+refresh token when using that local vault. Access tokens live only in memory.
+
+## Deployment
+
+```sh
+docker build -t trilingual-career-agent:phase5 .
+export CAREER_RUN_UID=$(id -u) CAREER_RUN_GID=$(id -g)
+docker compose -f docker-compose.operations.yml up -d
+```
+
+Containers use a non-root identity, Chromium and DejaVu fonts. Match the data-volume UID/GID
+to its owner; private data is mounted at /app/data and excluded from image copies. The
+example service binds only loopback. Use your own authenticated/TLS ingress for deployment
+to a shared host. The standalone PostgreSQL compose service is an alternative DB; set
+CAREER_DATABASE_URL and supply proper credentials/TLS for production. The provided local
+PostgreSQL trust configuration is development-only.
+
+In this cloud instance, home caches and build DNS require supported overrides:
+
+```sh
+export DOCKER_CONFIG=/workspace/.cache/docker
+python scripts/build_cloud_image.py
+```
+
+The helper forwards the existing platform proxy, resolves its host for the builder, and
+mounts the supplied public CA bundle temporarily. TLS, APT signatures and uv lockfile
+hashes stay enabled; no credential values or CA bundle are copied into image layers.
+Future services must use the platform proxy/trust route as appropriate; snapshots do not
+preserve running processes. See docs/OPERATIONS.md for required runtime setup.
+
+Current validation covers public APIs, local browser fixtures, documents, mock OAuth/Gmail/
+Calendar, UI, PostgreSQL and Docker. Real OpenAI, Brave and Google account access and real
+ATS submission remain unvalidated without credentials/verified facts/permitted contracts.
+Live submission remains disabled. No production application or outbound email was sent.
+
+Emergency stop: the Settings page writes private data/emergency_stop.flag. It is checked
+before browser preparation and again before clicking, alongside freshly loaded kill-switch
+settings. Removing the flag alone never enables live submission. Explicit non-US and
+known USD salary conflicts remain blocked independently of manual review/score. Monthly
+floors are compared only when currency and published month/year units are unambiguous;
+no salary answer or hourly/annual estimate is generated.
+
+Validation milestone: 112 local tests passed, including PostgreSQL and real browser fixtures.

@@ -25,3 +25,17 @@ def test_identity_not_inferred_and_technical_draft_not_submittable(profile):
     assert (
         answer_question(Question(label="Python skills", kind="technical"), profile).status == "HOLD"
     )
+
+
+def test_signatures_always_hold_even_with_confirmed_visa(profile):
+    profile.work_authorization.dso_verified = True
+    profile.work_authorization.work_authorization_answer = "Yes"
+    profile.work_authorization.sponsorship_answer = "Yes"
+    profile.work_authorization.answers_verified = True
+    assert (
+        answer_question(
+            Question(label="Sign this work authorization attestation", kind="work_authorization"),
+            profile,
+        ).status
+        == "HOLD"
+    )

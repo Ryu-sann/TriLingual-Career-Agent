@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 from pydantic import AwareDatetime, Field
 
 from career_agent.core.config import StrictModel
+from career_agent.evaluation.ranking import us_location
 from career_agent.models.job import JOB_HOSTS
 
 REQUIRED_CHECKS = {
@@ -20,6 +21,8 @@ REQUIRED_CHECKS = {
     "authorized_route",
     "questions",
     "remote_supervision",
+    "experience_requirements",
+    "known_eligibility_constraints",
 }
 
 
@@ -63,6 +66,26 @@ class FormSpec(StrictModel):
 
 def policy_reasons(profile, posting, manifest, spec, review, settings, score, mode):
     reasons = []
+    if us_location(posting)[0] == "REJECTED":
+        reasons.append("outside_us")
+    salary = posting.compensation.get("salaryRange", {})
+    if isinstance(salary, dict) and salary.get("currency") == "USD":
+        floor = (
+            profile.preferences.minimum_monthly_usd_remote
+            if posting.work_mode == "remote"
+            else profile.preferences.minimum_monthly_usd_onsite
+            if posting.work_mode == "onsite"
+            else None
+        )
+        maximum = salary.get("max")
+        units = {"per-year-salary": 12, "per-month-salary": 1}
+        if (
+            floor is not None
+            and type(maximum) in {int, float}
+            and salary.get("interval") in units
+            and maximum < floor * units[salary["interval"]]
+        ):
+            reasons.append("salary_below_candidate_floor")
     target = urlsplit(spec.url)
     if target.username is not None:
         reasons.append("url_credentials_not_allowed")

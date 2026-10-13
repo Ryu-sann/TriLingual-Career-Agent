@@ -119,6 +119,15 @@ def export_documents(profile, job, selection, output: Path):
             raise DocumentError("ats_text_validation_failed")
     manifest = {
         "claim_ids": selection.claim_ids,
+        "profile_hash": hashlib.sha256(
+            json.dumps(profile.model_dump(mode="json"), sort_keys=True).encode()
+        ).hexdigest(),
+        "job_content_hash": hashlib.sha256(
+            json.dumps(
+                job.model_dump(mode="json", exclude={"fetched_at", "published_at", "updated_at"}),
+                sort_keys=True,
+            ).encode()
+        ).hexdigest(),
         "source_job_url": job.source_url,
         "files": {
             name: hashlib.sha256((output / name).read_bytes()).hexdigest()

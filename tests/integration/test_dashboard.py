@@ -35,3 +35,14 @@ def test_dashboard_renders_source_urls_evidence_and_filters(engine, profile, mon
     ).run()
     assert not app.exception and not app.error
     assert any("引用符" in w.value for w in app.warning)
+
+
+def test_operations_pages_render_without_leaking_secret_values(engine, profile, monkeypatch):
+    monkeypatch.setenv("CAREER_DATABASE_URL", str(engine.url))
+    monkeypatch.setenv("CAREER_PROJECT_ROOT", str(ROOT))
+    monkeypatch.setenv("CAREER_OPENAI_API_KEY", "secret-test-must-not-display")
+    app = AppTest.from_file(str(APP), default_timeout=30).run()
+    for name in ["書類", "応募履歴", "メール・面接", "分析", "設定・確認事項"]:
+        next(w for w in app.sidebar.selectbox if w.label == "画面").select(name).run()
+        assert not app.exception and not app.error
+        assert "secret-test-must-not-display" not in str([x.value for x in app.json])

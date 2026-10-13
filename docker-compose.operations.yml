@@ -1,0 +1,37 @@
+services:
+  dashboard:
+    build: .
+    user: "${CAREER_RUN_UID:-10001}:${CAREER_RUN_GID:-10001}"
+    ports: ["127.0.0.1:8501:8501"]
+    volumes: ["./data:/app/data", "${CAREER_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}:/run/career-ca.pem:ro", "./config:/app/config:ro"]
+    environment:
+      CAREER_DATABASE_URL: ${CAREER_DATABASE_URL:-sqlite:///data/career.db}
+      CAREER_OPENAI_API_KEY: ${CAREER_OPENAI_API_KEY:-}
+      CAREER_OPENAI_MODEL: ${CAREER_OPENAI_MODEL:-}
+      CAREER_BRAVE_API_KEY: ${CAREER_BRAVE_API_KEY:-}
+      CAREER_GOOGLE_CLIENT_ID: ${CAREER_GOOGLE_CLIENT_ID:-}
+      CAREER_GOOGLE_CLIENT_SECRET: ${CAREER_GOOGLE_CLIENT_SECRET:-}
+      CAREER_GOOGLE_REFRESH_TOKEN: ${CAREER_GOOGLE_REFRESH_TOKEN:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-}
+      SSL_CERT_FILE: /run/career-ca.pem
+    restart: unless-stopped
+  worker:
+    build: .
+    user: "${CAREER_RUN_UID:-10001}:${CAREER_RUN_GID:-10001}"
+    command: ["career-agent", "worker"]
+    volumes: ["./data:/app/data", "${CAREER_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}:/run/career-ca.pem:ro", "./config:/app/config:ro"]
+    environment:
+      CAREER_DATABASE_URL: ${CAREER_DATABASE_URL:-sqlite:///data/career.db}
+      CAREER_OPENAI_API_KEY: ${CAREER_OPENAI_API_KEY:-}
+      CAREER_OPENAI_MODEL: ${CAREER_OPENAI_MODEL:-}
+      CAREER_BRAVE_API_KEY: ${CAREER_BRAVE_API_KEY:-}
+      CAREER_GOOGLE_CLIENT_ID: ${CAREER_GOOGLE_CLIENT_ID:-}
+      CAREER_GOOGLE_CLIENT_SECRET: ${CAREER_GOOGLE_CLIENT_SECRET:-}
+      CAREER_GOOGLE_REFRESH_TOKEN: ${CAREER_GOOGLE_REFRESH_TOKEN:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-}
+      SSL_CERT_FILE: /run/career-ca.pem
+    restart: unless-stopped

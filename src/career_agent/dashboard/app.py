@@ -10,6 +10,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from career_agent.core.config import Settings
+from career_agent.dashboard.operations_pages import render
 from career_agent.database.connection import database_url, engine_for, migrate
 from career_agent.database.models import WorkflowRun
 from career_agent.discovery.search import SearchKeywords
@@ -44,6 +45,12 @@ def main():
         engine = engine_for(url)
         try:
             migrate(engine, root)
+            section = st.sidebar.selectbox(
+                "画面", ["求人一覧", "書類", "応募履歴", "メール・面接", "分析", "設定・確認事項"]
+            )
+            if section != "求人一覧":
+                render(section, root, engine, profile, settings)
+                return
             with st.expander("企業の採用サイトから直接探す"):
                 title = st.text_input("探したい職種", value="Applications Engineer")
                 try:

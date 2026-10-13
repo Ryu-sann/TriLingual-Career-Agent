@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from career_agent.applications.browser import FormHold, execute_form
 from career_agent.applications.policy import digest, policy_reasons
-from career_agent.core.config import load_yaml
+from career_agent.core.config import Settings, load_yaml
 from career_agent.database.models import (
     Application,
     ApplicationAnswer,
@@ -23,6 +23,7 @@ from career_agent.database.models import (
     WorkflowRun,
     now,
 )
+from career_agent.models.candidate import CandidateProfile
 from career_agent.models.job import JobPosting
 
 
@@ -112,6 +113,8 @@ def apply(
 ):
     if mode not in {"dry_run", "fixture", "live"}:
         raise ValueError("Unknown execution mode")
+    if mode != "fixture" and (root / "data/emergency_stop.flag").exists():
+        return {"status": "HOLD", "reasons": ["emergency_stop"]}
     with Session(engine) as session:
         record, document = session.get(Job, job_id), session.get(ResumeVersion, resume_id)
         if (
@@ -128,6 +131,12 @@ def apply(
         manifest = json.loads((output / "manifest.json").read_text())
         if digest(manifest) != document.content_sha256:
             return {"status": "HOLD", "reasons": ["document_manifest_changed"]}
+        if manifest.get("profile_hash") != digest(profile.model_dump(mode="json")):
+            return {"status": "HOLD", "reasons": ["document_profile_changed"]}
+        if manifest.get("job_content_hash") != digest(
+            posting.model_dump(mode="json", exclude={"fetched_at", "published_at", "updated_at"})
+        ):
+            return {"status": "HOLD", "reasons": ["document_job_changed"]}
         for name, expected in manifest["files"].items():
             path = (output / name).resolve()
             if (
@@ -168,12 +177,34 @@ def apply(
 
     def before_submit(answers, screenshot):
         nonlocal application_id
+        if mode != "fixture":
+            fresh = Settings.load(root / "config/settings.yaml")
+            if (root / "data/emergency_stop.flag").exists() or (
+                mode == "live"
+                and (
+                    fresh.automation.kill_switch
+                    or not fresh.automation.enabled
+                    or fresh.automation.dry_run
+                )
+            ):
+                raise FormHold("emergency_or_live_switch_stopped")
+            private = root / "data/profile/candidate_profile.yaml"
+            if (
+                private.is_file()
+                and digest(CandidateProfile.load(private).model_dump(mode="json"))
+                != review.profile_hash
+            ):
+                raise FormHold("candidate_changed_during_preparation")
+            if evaluation.score < fresh.matching.minimum_auto_apply_score:
+                raise FormHold("score_threshold_changed")
+        else:
+            fresh = settings
         application_id = reserve(
             engine,
             profile,
             job_id,
             resume_id,
-            settings,
+            fresh,
             answers=answers,
             mode=mode,
             evidence_path=screenshot.relative_to(root),

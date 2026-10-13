@@ -21,15 +21,19 @@ def from_rule(profile, posting, manifest, rule):
         }
     )
     proofs = rule.get("verified_checks", {})
-    gates = {
-        key: Gate(verified=bool(proofs.get(key)), evidence=proofs.get(key, ""))
-        for key in REQUIRED_CHECKS | {"cip_stem_list", "everify", "i983"}
-    }
+    gates = {}
+    for key in REQUIRED_CHECKS | {"cip_stem_list", "everify", "i983"}:
+        proof = proofs.get(key, {})
+        verified = isinstance(proof, dict) and proof.get("status") == "VERIFIED"
+        evidence = proof.get("evidence", "") if isinstance(proof, dict) else ""
+        gates[key] = Gate(verified=bool(verified and evidence), evidence=evidence)
     text = posting.description.casefold()
     terms = rule.get("degree_duty_terms", [])
     titles = rule.get("allowed_title_fragments", [])
     degree_confirmed = any(
-        c.category == "education" and profile.education.major.casefold() in c.text.casefold()
+        c.category == "education"
+        and profile.education.major.casefold() in c.text.casefold()
+        and profile.education.degree.casefold() in c.text.casefold()
         for c in profile.verified_claims
     )
     gates["degree_related_duties"] = Gate(

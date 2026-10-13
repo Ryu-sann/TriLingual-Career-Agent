@@ -18,6 +18,7 @@ from career_agent.database.repository import save_profile
 from career_agent.discovery.http import DiscoveryError
 from career_agent.discovery.site_search import brave_search, search_links
 from career_agent.documents.tailoring import DocumentError
+from career_agent.integrations.google import IntegrationError
 from career_agent.models.candidate import CandidateProfile, Verification
 from career_agent.models.job import Watchlist
 from career_agent.workflows.job_pipeline import discover, ranked_jobs
@@ -65,6 +66,9 @@ def main(argv=None) -> int:
             "site-search",
             "documents",
             "application",
+            "sync-email",
+            "calendar",
+            "worker",
         ],
     )
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -74,6 +78,9 @@ def main(argv=None) -> int:
     parser.add_argument("--query", default="")
     parser.add_argument("--job-id")
     parser.add_argument("--resume-id")
+    parser.add_argument("--event", type=Path)
+    parser.add_argument("--write-calendar", action="store_true")
+    parser.add_argument("--once", action="store_true")
     parser.add_argument("--form-spec", type=Path)
     parser.add_argument("--review", type=Path)
     parser.add_argument("--live", action="store_true")
@@ -87,6 +94,22 @@ def main(argv=None) -> int:
     engine = None
     try:
         settings = Settings.load(root / args.settings)
+        if args.command == "worker":
+            from career_agent.operations.worker import run_worker, scheduled_discovery
+
+            if args.once:
+                summary = scheduled_discovery(root)
+                print(json.dumps(summary))
+                return (
+                    0
+                    if summary.get("status") == "SUCCEEDED"
+                    else 3
+                    if summary.get("status") == "PARTIAL"
+                    else 2
+                )
+            else:
+                run_worker(root)
+            return 0
         if args.command == "site-search":
             watchlist = Watchlist.load(root / args.watchlist)
             search = brave_search if args.automated_search else search_links
@@ -107,6 +130,19 @@ def main(argv=None) -> int:
             print(json.dumps({"schema": "0001", "status": "initialized"}))
             return 0
         profile = CandidateProfile.load(root / args.profile)
+        if args.command == "sync-email":
+            from career_agent.workflows.email_pipeline import sync_email
+
+            print(json.dumps(sync_email(engine, profile)))
+            return 0
+        if args.command == "calendar":
+            from career_agent.workflows.calendar_pipeline import InterviewEvent, schedule_interview
+
+            if args.event is None:
+                raise ValueError("Verified event file required")
+            event = InterviewEvent.model_validate(json.loads(args.event.read_text()))
+            print(json.dumps(schedule_interview(engine, event, write=args.write_calendar)))
+            return 0
         if args.command == "application":
             from career_agent.applications.policy import FormSpec, Review
             from career_agent.workflows.application_pipeline import apply
@@ -168,6 +204,9 @@ def main(argv=None) -> int:
             session.add(AuditLog(run_id=run.id, action="DRY_RUN_COMPLETED", details=summary))
         print(json.dumps(summary, sort_keys=True))
         return 0
+    except IntegrationError as exc:
+        print(json.dumps({"error": str(exc)}))
+        return 2
     except DocumentError as exc:
         print(json.dumps({"error": str(exc)}))
         return 2

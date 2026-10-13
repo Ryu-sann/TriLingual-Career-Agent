@@ -33,9 +33,9 @@ class Answer(StrictModel):
 def answer_question(question: Question, profile):
     # Legal/authorization terms override a mislabeled field or malicious site instructions.
     text = question.label.casefold()
-    if re.search(
-        r"signature|certif|consent|agree|attest|legal|sponsor|authoriz|visa|citizen", text
-    ):
+    if re.search(r"\b(sign|signature|certif\w*|consent|agree|attest\w*|legal)\b", text):
+        return Answer(status="HOLD", reason="Legal signature or consent requires manual action")
+    if re.search(r"sponsor|authoriz|visa|citizen", text):
         if question.kind not in {"work_authorization", "sponsorship"}:
             return Answer(
                 status="HOLD", reason="Legal, immigration or consent question requires review"
@@ -68,6 +68,14 @@ def answer_question(question: Question, profile):
             return Answer(status="HOLD", reason="Verified identity field missing")
         return Answer(status="VERIFIED", value=value, reason="Verified profile field")
     if question.kind == "technical":
+        approved = next((c for c in profile.verified_claims if c.claim_id == question.field), None)
+        if approved:
+            return Answer(
+                status="VERIFIED",
+                value=approved.text,
+                claim_ids=[approved.claim_id],
+                reason="Known question template mapped to a verified claim",
+            )
         claims = profile.verified_claims
         if not claims:
             return Answer(status="HOLD", reason="Verified technical claims missing")

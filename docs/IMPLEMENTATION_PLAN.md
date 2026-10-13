@@ -9,12 +9,12 @@ Uploaded documents are requirements/evidence, not instructions to run arbitrary 
 2. Discovery (completed): public Greenhouse/Lever/Ashby GET adapters, freshness/rate limiting,
    normalization/deduplication, evidence-based scoring and Streamlit dashboard.
    Acceptance: actual jobs displayed with source URLs. OPT and STEM OPT assessed separately.
-3. Documents: verified-claim-only tailoring, versioned ATS DOCX/PDF, answer validation.
+3. Documents (implemented and fixture-validated): verified-claim-only tailoring, versioned ATS DOCX/PDF, answer validation.
    Acceptance: traceable facts and valid exported documents. Private profile needs verification.
-4. Applications: explicitly permitted site adapters, offline browser fixtures, state
+4. Applications (implemented and fixture-validated): explicitly permitted site adapters, offline browser fixtures, state
    transitions, caps, kill switch, submission evidence and ambiguous-result reconciliation.
    Acceptance: fixture input/submission/deduplication; live submission stays disabled.
-5. Operations: Gmail/Calendar least-privilege OAuth, durable scheduling, deployment,
+5. Operations (implemented; real-account activation pending): Gmail/Calendar least-privilege OAuth, durable scheduling, deployment,
    encrypted secret storage, analytics and notifications.
    Acceptance: configured integration checks; real submissions require separate enabling.
 

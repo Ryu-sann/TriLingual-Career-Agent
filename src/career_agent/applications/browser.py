@@ -18,9 +18,28 @@ def execute_form(profile, spec, resume, evidence_dir, *, mode, before_submit):
     evidence_dir.mkdir(mode=0o700, parents=True, exist_ok=False)
     submitted = False
     with sync_playwright() as p:
+        proxy_uri = os.environ.get("CAREER_BROWSER_PROXY") or os.environ.get("HTTPS_PROXY")
+        proxy = None
+        if (
+            mode != "fixture"
+            and urlsplit(spec.url).hostname not in {"localhost", "127.0.0.1"}
+            and proxy_uri
+        ):
+            parsed_proxy = urlsplit(proxy_uri)
+            proxy = {
+                "server": (
+                    f"{parsed_proxy.scheme}://{parsed_proxy.hostname}:{parsed_proxy.port or 80}"
+                )
+            }
+            if parsed_proxy.username:
+                proxy["username"] = parsed_proxy.username
+                proxy["password"] = parsed_proxy.password or ""
         browser = p.chromium.launch(
-            executable_path=os.environ.get("CAREER_CHROMIUM_PATH") or shutil.which("chromium"),
+            executable_path=os.environ.get("CAREER_CHROMIUM_PATH")
+            or shutil.which("chromium")
+            or shutil.which("google-chrome"),
             headless=True,
+            proxy=proxy,
         )
         try:
             context = browser.new_context()
@@ -74,6 +93,12 @@ def execute_form(profile, spec, resume, evidence_dir, *, mode, before_submit):
                 labels = page.locator(f'label[for="{field.selector[1:]}"]').all_inner_texts()
                 label = " ".join(labels).strip() or node.get_attribute("aria-label")
                 question = Question.model_validate(field.question)
+                required_now = (
+                    node.get_attribute("required") is not None
+                    or node.get_attribute("aria-required") == "true"
+                )
+                if required_now and not question.required:
+                    raise FormHold("required_question_changed")
                 if not label or label.casefold() != question.label.strip().casefold():
                     raise FormHold("question_label_changed")
                 answer = answer_question(question, profile)
@@ -107,6 +132,8 @@ def execute_form(profile, spec, resume, evidence_dir, *, mode, before_submit):
                 for field, (_, answer) in zip(spec.fields, answers, strict=True)
                 if answer.status == "VERIFIED"
             ]
+            if not page.locator(spec.submit_selector).is_enabled():
+                raise FormHold("form_not_ready")
             before_submit(private_answers, screenshot)  # Commit reservation BEFORE the click.
             state["posts_allowed"] = True
             submitted = True

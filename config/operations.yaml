@@ -1,0 +1,10 @@
+discovery_hours: [9, 21]
+email_sync_enabled: false
+email_poll_minutes: 15
+documents_enabled: true
+use_ai: false
+calendar_write_enabled: false
+max_documents_per_cycle: 25
+site_search_enabled: false
+site_search_titles: [Applications Engineer, Test Engineer, Data Analyst]
+daily_summary_enabled: true
